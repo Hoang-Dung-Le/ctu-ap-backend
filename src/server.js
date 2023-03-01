@@ -7,7 +7,7 @@ const app = express();
 const bp = require('body-parser')
 app.use(bp.json())
 app.use(bp.urlencoded({ extended: true }))
-app.use('/uploads', express.static('images'));
+// app.use('/uploads', express.static('images'));
 
 require('dotenv').config();
 // console.log('chay trc ne');
@@ -16,12 +16,6 @@ import connection from "./configs/connectDB";
 const port = process.env.PORT;
 
 import initWebRoute from './route/web';
-
-
-
-
-
-
 
 configViewEngine(app);
 initWebRoute(app);

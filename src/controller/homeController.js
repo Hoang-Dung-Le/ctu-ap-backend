@@ -17,5 +17,5 @@ let getDetailPage = async (req, res) => {
 }
 
 module.exports = {
-    getHomePage
+    getHomePage, getDetailPage
 }
