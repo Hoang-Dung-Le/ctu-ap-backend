@@ -25,6 +25,14 @@ let getImageFromId = async (req, res) => {
     })
 }
 
+let insertProducts = async (req, res) => {
+    let [user_id, price, img_id, fac_id, name, subject, author, detail] = req.body
+    pool.execute('insert into products(user_id, price, type, img_id, fac_id, name,subject, author, detail, hidden, product_date) values(?, ?, 1, ?, ?, ?, ?, ?, ?, GetDate())', [user_id, price, img_id, fac_id, name, subject, author, detail, 0])
+    return res.status(200).json({
+        messgae: 'ok'
+    })
+}
+
 
 let getRecommendedProducts = async (req, res) => {
     const [rows, fiels] = await pool.execute('SELECT * FROM `products` LIMIT 3');
@@ -82,5 +90,5 @@ let createNewUser = async (req, res) => {
 
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
-    getImageFromId
+    getImageFromId, insertProducts
 }
