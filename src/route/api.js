@@ -17,23 +17,31 @@ const initAPIRoute = (app) => {
             cb(null, "./src/public/images");
         },
         filename: async function (req, file, cb) {
+            var [rows, fiels] = await pool.execute('select img_id from images order by img_id desc')
             const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
             let originalName = file.originalname;
             let extension = originalName.split(".")[1];
             cb(null, file.fieldname + "-" + uniqueSuffix + "." + extension);
-            pool.execute('insert into images(type, url) values(1, ?)', [file.fieldname + "-" + uniqueSuffix + "." + extension])
-            const [rows, fiels] = await pool.execute('SELECT * FROM `images` where url=?', [file.fieldname + "-" + uniqueSuffix + "." + extension]);
-            console.log(rows[0].img_id)
-            img_id = rows[0].img_id
+            try {
+                pool.execute('insert into images(type, url) values(1, ?)', [file.fieldname + "-" + uniqueSuffix + "." + extension])
+                // const [rows, fiels] = await pool.execute('SELECT * FROM `images` where url=?', [file.fieldname + "-" + uniqueSuffix + "." + extension]);
+                img_id = rows[0].img_id + 1
+            } catch (err) {
+                img_id = -1
+            }
+
+
         },
     });
 
     const upload = multer({ storage: storage });
     router.post("/upload", upload.single("picture"), function (req, res) {
+        // const [rows, fiels] = pool.execute('SELECT * FROM `images` where url=?', [file.fieldname + "-" + uniqueSuffix + "." + extension]);
         res.status(200).json({
-            result: img_id
+            "img_id": img_id
         })
     });
+    router.post('/uploadProducts', APIController.uploadProduct)
     return app.use("/api/v1/", router)
 }
 

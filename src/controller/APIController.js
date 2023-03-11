@@ -25,9 +25,10 @@ let getImageFromId = async (req, res) => {
     })
 }
 
-let insertProducts = async (req, res) => {
-    let [user_id, price, img_id, fac_id, name, subject, author, detail] = req.body
-    pool.execute('insert into products(user_id, price, type, img_id, fac_id, name,subject, author, detail, hidden, product_date) values(?, ?, 1, ?, ?, ?, ?, ?, ?, GetDate())', [user_id, price, img_id, fac_id, name, subject, author, detail, 0])
+let uploadProduct = async (req, res) => {
+    console.log(req.body)
+    let { user_id, price, img_id, fac_id, name, subject, author, detail } = req.body
+    pool.execute('insert into products(user_id, price, type, img_id, fac_id, name,subject, author, detail, hidden, product_date) values(?, ?, 1, ?, ?, ?, ?, ?, ?,?, NOW())', [user_id, price, img_id, fac_id, name, subject, author, detail, 0])
     return res.status(200).json({
         messgae: 'ok'
     })
@@ -90,5 +91,5 @@ let createNewUser = async (req, res) => {
 
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
-    getImageFromId, insertProducts
+    getImageFromId, uploadProduct
 }
