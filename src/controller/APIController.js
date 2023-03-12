@@ -9,6 +9,14 @@ let getAllUsers = async (req, res) => {
     })
 }
 
+let getQuestion = async (req, res) => {
+    const [rows, fiels] = await pool.execute('SELECT * FROM questions LIMIT 10')
+    console.log(rows)
+    return res.status(200).json({
+        "result": rows
+    })
+}
+
 let getImageFromId = async (req, res) => {
     let id = req.body.img_id
     const [rows, fiels] = await pool.execute('SELECT * FROM images WHERE img_id = ?', [id]);
@@ -91,5 +99,5 @@ let createNewUser = async (req, res) => {
 
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
-    getImageFromId, uploadProduct
+    getImageFromId, uploadProduct, getQuestion
 }
