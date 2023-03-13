@@ -11,7 +11,7 @@ let getAllUsers = async (req, res) => {
 
 let getQuestion = async (req, res) => {
     const [rows, fiels] = await pool.execute('SELECT * FROM questions LIMIT 10')
-    console.log(rows)
+    // console.log(rows)
     return res.status(200).json({
         "result": rows
     })
@@ -39,6 +39,24 @@ let uploadProduct = async (req, res) => {
     pool.execute('insert into products(user_id, price, type, img_id, fac_id, name,subject, author, detail, hidden, product_date) values(?, ?, 1, ?, ?, ?, ?, ?, ?,?, NOW())', [user_id, price, img_id, fac_id, name, subject, author, detail, 0])
     return res.status(200).json({
         messgae: 'ok'
+    })
+}
+
+let uploadQuestion_1 = async (req, res) => {
+    console.log(req.body)
+    let { user_id, title, detail, img_id } = req.body
+    pool.execute('insert into questions(user_id, title, detail, img_id) values(?,?,?,?)', [user_id, title, detail, img_id])
+    return res.status(200).json({
+        message: 'ok'
+    })
+}
+
+let uploadQuestion_2 = async (req, res) => {
+    console.log(req.body)
+    let { user_id, title, detail } = req.body
+    pool.execute('insert into questions(user_id, title, detail) values(?,?,?)', [user_id, title, detail])
+    return res.status(200).json({
+        message: 'ok'
     })
 }
 
@@ -99,5 +117,5 @@ let createNewUser = async (req, res) => {
 
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
-    getImageFromId, uploadProduct, getQuestion
+    getImageFromId, uploadProduct, getQuestion, uploadQuestion_1, uploadQuestion_2
 }

@@ -12,6 +12,8 @@ const initAPIRoute = (app) => {
     router.get('/getRecommendedProducts', APIController.getRecommendedProducts);
     router.post('/getImageFromId', APIController.getImageFromId)
     router.get('/getQuestions', APIController.getQuestion)
+    router.post('/uploadQuestion_1', APIController.uploadQuestion_1)
+    router.post('/uploadQuestion_2', APIController.uploadQuestion_2)
     let img_id;
     const storage = multer.diskStorage({
         destination: function (req, file, cb) {
