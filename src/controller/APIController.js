@@ -9,6 +9,39 @@ let getAllUsers = async (req, res) => {
     })
 }
 
+
+let searchProducts = async (req, res) => {
+    let searchName = req.body.searchName
+    console.log(searchName)
+    const [rows, fiels] = await pool.execute("SELECT * FROM `products` WHERE name LIKE '%" + searchName + "%' or subject LIKE '%" + searchName + "%' or detail LIKE '%" + searchName + "%'")
+    console.log(rows)
+    return res.status(200).json({
+        result: rows
+    })
+}
+
+let sendMessage = async (req, res) => {
+    let { send_id, receive_id, detail } = req.body
+    console.log(req.body)
+    pool.execute('insert into message(send, receive, detail, time) values (?, ?, ?, NOW())', [send_id, receive_id, detail])
+    return res.status(200).json({
+        message: "ok"
+    })
+}
+
+let getQuestionFromId = async (req, res) => {
+    let qes_id = req.body.qes_id
+    const [rows, fiels] = await pool.execute('SELECT * FROM questions WHERE qes_id=?', [qes_id])
+    console.log(rows)
+    return res.status(200).json({
+        qes_id: rows[0].qes_id,
+        user_id: rows[0].user_id,
+        title: rows[0].title,
+        detail: rows[0].detail,
+        img_id: rows[0].img_id
+    })
+}
+
 let getQuestion = async (req, res) => {
     const [rows, fiels] = await pool.execute('SELECT * FROM questions LIMIT 10')
     // console.log(rows)
@@ -82,6 +115,7 @@ let getUser = async (req, res) => {
             message: "error"
         })
     }
+    console.log("ok r ne")
     return res.status(200).json({
         user_id: rows[0].user_id,
         email: rows[0].email,
@@ -117,5 +151,6 @@ let createNewUser = async (req, res) => {
 
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
-    getImageFromId, uploadProduct, getQuestion, uploadQuestion_1, uploadQuestion_2
+    getImageFromId, uploadProduct, getQuestion, uploadQuestion_1, uploadQuestion_2,
+    getQuestionFromId, sendMessage, searchProducts
 }
