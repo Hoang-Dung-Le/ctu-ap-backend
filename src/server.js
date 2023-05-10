@@ -51,7 +51,8 @@ io.on('connection', (socket) => {
     });
 
     // Listen for incoming requests for chat history
-    socket.on('chat history', (request) => {
+    socket.on('chathistory', (request) => {
+        console.log('đã lấy lịch sử')
         const sql = `
         SELECT *
         FROM message
@@ -59,6 +60,7 @@ io.on('connection', (socket) => {
           OR (send = ? AND receive = ?)
         ORDER BY time
       `;
+
         const values = [request.senderId, request.recipientId, request.recipientId, request.senderId];
         pool.execute(sql, values, (error, results, fields) => {
             if (error) throw error;

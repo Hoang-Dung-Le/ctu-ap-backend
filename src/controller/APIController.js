@@ -85,6 +85,15 @@ let unHiddenProduct = async (req, res) => {
 
 }
 
+let comment = async (req, res) => {
+    let { user_id, qes_id, cmt } = req.body
+    const [rows, fields] = await pool.execute("INSERT INTO answers(user_id, qes_id, cmt, ans_date) VALUES(?, ?, ?, NOW())", [user_id, qes_id, cmt])
+    const [row, field] = await pool.execute("SELECT answers.user_id,tendang_nhap, cmt, qes_id from answers, users where users.user_id=answers.user_id and ans_id = ?", [rows.insertId])
+    return res.status(200).json({
+        "message": row
+    })
+}
+
 let uploadProduct = async (req, res) => {
     console.log(req.body)
     let { user_id, price, img_id, fac_id, name, subject, author, detail } = req.body
@@ -188,8 +197,27 @@ let createNewUser = async (req, res) => {
     })
 }
 
+let historyOfChat = async (req, res) => {
+    let { senderId, recipientId } = req.body
+    const [rows, fields] = await pool.execute('SELECT * FROM message WHERE (send = ? and receive = ?) or (send = ? and receive = ?) ORDER BY time', [senderId, recipientId, recipientId, senderId])
+    return res.status(200).json({
+        'data': rows
+    })
+}
+
+let getCmt = async (req, res) => {
+    let qes_id = req.body.qes_id
+    const [rows, field] = await pool.execute(
+        'SELECT answers.user_id, tendang_nhap, qes_id, cmt from answers, users where answers.user_id=users.user_id and qes_id = ?', [qes_id]
+    )
+    return res.status(200).json({
+        "data": rows
+    })
+}
+
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
     getImageFromId, uploadProduct, getQuestion, uploadQuestion_1, uploadQuestion_2,
-    getQuestionFromId, sendMessage, searchProducts, getInfoUser, getMyProducts, hiddenProduct, unHiddenProduct
+    getQuestionFromId, sendMessage, searchProducts, getInfoUser, getMyProducts, hiddenProduct, unHiddenProduct,
+    historyOfChat, comment, getCmt
 }
