@@ -13,7 +13,7 @@ let getAllUsers = async (req, res) => {
 let searchProducts = async (req, res) => {
     let searchName = req.body.searchName
     console.log(searchName)
-    const [rows, fiels] = await pool.execute("SELECT * FROM `products` WHERE name LIKE '%" + searchName + "%' or subject LIKE '%" + searchName + "%' or detail LIKE '%" + searchName + "%'")
+    const [rows, fiels] = await pool.execute("SELECT * FROM `products` WHERE (name LIKE '%" + searchName + "%' or subject LIKE '%" + searchName + "%' or detail LIKE '%" + searchName + "%') and hidden=0")
     console.log(rows)
     return res.status(200).json({
         result: rows
@@ -52,6 +52,7 @@ let getQuestion = async (req, res) => {
 
 let getImageFromId = async (req, res) => {
     let id = req.body.img_id
+    console.log(id)
     const [rows, fiels] = await pool.execute('SELECT * FROM images WHERE img_id = ?', [id]);
 
     if (rows.length == 0) {
@@ -64,6 +65,24 @@ let getImageFromId = async (req, res) => {
         type: rows[0].type,
         url: rows[0].url
     })
+}
+
+let hiddenProduct = async (req, res) => {
+    let product_id = req.body.product_id
+    const [rows, fields] = await pool.execute("UPDATE products SET hidden = 1 WHERE product_id=?", [product_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+
+}
+
+let unHiddenProduct = async (req, res) => {
+    let product_id = req.body.product_id
+    const [rows, fields] = await pool.execute("UPDATE products SET hidden = 0 WHERE product_id=?", [product_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+
 }
 
 let uploadProduct = async (req, res) => {
@@ -95,7 +114,9 @@ let uploadQuestion_2 = async (req, res) => {
 
 
 let getRecommendedProducts = async (req, res) => {
-    const [rows, fiels] = await pool.execute('SELECT * FROM `products` LIMIT 3');
+    let { fac_id } = req.body
+    // console.log(req.body)
+    const [rows, fiels] = await pool.execute('SELECT * FROM `products` WHERE fac_id=? and hidden = 0', [fac_id]);
 
     if (rows.length == 0) {
         return res.status(201).json({
@@ -104,6 +125,16 @@ let getRecommendedProducts = async (req, res) => {
     }
     return res.status(200).json({
         data: rows
+    })
+}
+
+let getInfoUser = async (req, res) => {
+    let user_id = req.body.user_id
+    const [rows, fields] = await pool.execute('SELECT * FROM users WHERE user_id = ?', [user_id])
+    return res.status(200).json({
+        email: rows[0].email,
+        fac_id: rows[0].fac_id,
+        tendang_nhap: rows[0].tendang_nhap
     })
 }
 
@@ -123,6 +154,14 @@ let getUser = async (req, res) => {
         tendang_nhap: rows[0].tendang_nhap,
         fac_id: rows[0].fac_id,
         img_id: rows[0].img_id
+    })
+}
+
+let getMyProducts = async (req, res) => {
+    let user_id = req.body.user_id
+    const [rows, fields] = await pool.execute('SELECT product_id, name, price, subject, detail, img_id, hidden FROM products WHERE user_id = ?', [user_id])
+    return res.status(200).json({
+        data: rows
     })
 }
 
@@ -152,5 +191,5 @@ let createNewUser = async (req, res) => {
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
     getImageFromId, uploadProduct, getQuestion, uploadQuestion_1, uploadQuestion_2,
-    getQuestionFromId, sendMessage, searchProducts
+    getQuestionFromId, sendMessage, searchProducts, getInfoUser, getMyProducts, hiddenProduct, unHiddenProduct
 }
