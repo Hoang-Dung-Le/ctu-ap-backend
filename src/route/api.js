@@ -25,6 +25,13 @@ const initAPIRoute = (app) => {
     router.post('/historyOfChat', APIController.historyOfChat)
     router.post('/comment', APIController.comment)
     router.post('/getCmt', APIController.getCmt)
+    router.post('/insertPrinttingShop', APIController.insertPrinttingShop)
+    router.post('/checkUserName', APIController.checkUserName)
+    router.post('/getInfoShop', APIController.getInfoShop)
+    router.post('/getListMessage', APIController.getListMessage)
+    router.post('/getListShop', APIController.getListShop)
+    router.post('/getListMessageUser', APIController.getListMessageUser)
+    router.post('/getListMessageShop', APIController.getListMessageShop)
     let img_id;
     const storage = multer.diskStorage({
         destination: function (req, file, cb) {
