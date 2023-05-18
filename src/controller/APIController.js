@@ -542,7 +542,7 @@ let getQuestionFromId = async (req, res) => {
 }
 
 let getQuestion = async (req, res) => {
-    const [rows, fiels] = await pool.execute('SELECT * FROM questions LIMIT 10')
+    const [rows, fiels] = await pool.execute('SELECT * FROM questions ORDER BY time')
     // console.log(rows)
     return res.status(200).json({
         "result": rows
@@ -614,7 +614,7 @@ let uploadQuestion_1 = async (req, res) => {
 let uploadQuestion_2 = async (req, res) => {
     console.log(req.body)
     let { user_id, title, detail } = req.body
-    pool.execute('insert into questions(user_id, title, detail) values(?,?,?)', [user_id, title, detail])
+    pool.execute('insert into questions(user_id, title, detail, time) values(?,?,?, NOW())', [user_id, title, detail])
     return res.status(200).json({
         message: 'ok'
     })
@@ -713,7 +713,8 @@ let getCmt = async (req, res) => {
 
 let insertPrinttingShop = async (req, res) => {
     let { email, tendang_nhap, password, img_id, ten_cua_hang, sdt, dia_chi, thoi_gian_mo, thoi_gian_dong, mo_ta } = req.body
-    const [row1, f1] = await pool.execute('insert into users(email, tendang_nhap, password, img_id, isPrinter) values(?, ?, ?, ?, 1)', [email, tendang_nhap, password, img_id])
+    let hasspass = hashPassword(password)
+    const [row1, f1] = await pool.execute('insert into users(email, tendang_nhap, password, img_id, isPrinter) values(?, ?, ?, ?, 1)', [email, tendang_nhap, hasspass, img_id])
     const [row2, f2] = await pool.execute('insert into printingshop(ten_cua_hang, sdt, dia_chi, thoi_gian_mo, thoi_gian_dong, mo_ta, user_id) values(?, ?, ?, ?,?,?,?)', [ten_cua_hang, sdt, dia_chi, thoi_gian_mo, thoi_gian_dong, mo_ta, row1.insertId])
     return res.status(200).json({
         "user": row1,
@@ -779,38 +780,44 @@ let getListMessage = async (req, res) => {
 
 let getListMessageUser = async (req, res) => {
     let user_id = req.body.user_id
-
+    console.log(12312321323)
     let result = []
     let id = []
     let isRead = []
-    const [r, f] = await pool.execute("SELECT DISTINCT tendang_nhap,  receive, send from message, users where users.user_id=message.receive and (send = ? or receive=?) and isPrinter IS NULL ORDER BY time DESC", [user_id, user_id])
+    const [r, f] = await pool.execute("SELECT DISTINCT tendang_nhap,  receive, send from message, users where users.user_id=message.receive and (send = ? or receive=?) and users.isPrinter IS NULL ORDER BY time DESC", [user_id, user_id])
     for (let i = 0; i < r.length; i++) {
         let rec = r[i]['receive']
         let send = r[i]['send']
         if (rec != user_id) {
-            const [r1, f1] = await pool.execute('SELECT DISTINCT tendang_nhap, user_id from users where user_id = ?', [rec])
-            if (!id.includes(r1[0]['user_id'])) {
-                result.push(r1[0])
-                id.push(r1[0]['user_id'])
-                const [r2, f2] = await pool.execute("SELECT * FROM message WHERE ((send = ? and receive=?)) and isRead=0", [rec, user_id])
-                if (r2.length > 0) {
-                    isRead.push(0)
-                } else {
-                    isRead.push(1)
+            const [r1, f1] = await pool.execute('SELECT DISTINCT tendang_nhap, user_id from users where user_id = ? and isPrinter is NULL', [rec])
+            if (r1.length > 0) {
+                if (!id.includes(r1[0]['user_id'])) {
+                    result.push(r1[0])
+                    id.push(r1[0]['user_id'])
+                    const [r2, f2] = await pool.execute("SELECT * FROM message WHERE ((send = ? and receive=?)) and isRead=0", [rec, user_id])
+                    if (r2.length > 0) {
+                        isRead.push(0)
+                    } else {
+                        isRead.push(1)
+                    }
                 }
             }
+
         } else {
-            const [r1, f1] = await pool.execute('SELECT DISTINCT tendang_nhap, user_id from users where user_id = ?', [send])
-            if (!id.includes(r1[0]['user_id'])) {
-                result.push(r1[0])
-                id.push(r1[0]['user_id'])
-                const [r2, f2] = await pool.execute("SELECT * FROM message WHERE ((send = ? and receive=?)) and isRead=0", [send, user_id])
-                if (r2.length > 0) {
-                    isRead.push(0)
-                } else {
-                    isRead.push(1)
+            const [r1, f1] = await pool.execute('SELECT DISTINCT tendang_nhap, user_id from users where user_id = ? and isPrinter is NULL', [send])
+            if (r1.length > 0) {
+                if (!id.includes(r1[0]['user_id'])) {
+                    result.push(r1[0])
+                    id.push(r1[0]['user_id'])
+                    const [r2, f2] = await pool.execute("SELECT * FROM message WHERE ((send = ? and receive=?)) and isRead=0", [send, user_id])
+                    if (r2.length > 0) {
+                        isRead.push(0)
+                    } else {
+                        isRead.push(1)
+                    }
                 }
             }
+
 
         }
 
@@ -827,6 +834,8 @@ let getListMessageUser = async (req, res) => {
 // }
 
 let getListMessageShop = async (req, res) => {
+    let id = []
+    let isRead = []
     let user_id = req.body.user_id
 
     let result = []
@@ -836,17 +845,35 @@ let getListMessageShop = async (req, res) => {
         let rec = r[i]['receive']
         let send = r[i]['send']
         if (rec != user_id) {
-            const [r1, f1] = await pool.execute('SELECT DISTINCT ten_cua_hang, user_id from printingShop where user_id = ?', [rec])
-            result.push(r1[0])
+            const [r1, f1] = await pool.execute('SELECT DISTINCT ten_cua_hang, user_id from printingShop  where user_id = ?', [rec])
+            if (!id.includes(r1[0]['user_id'])) {
+                result.push(r1[0])
+                id.push(r1[0]['user_id'])
+                const [r2, f2] = await pool.execute("SELECT * FROM message WHERE ((send = ? and receive=?)) and isRead=0", [rec, user_id])
+                if (r2.length > 0) {
+                    isRead.push(0)
+                } else {
+                    isRead.push(1)
+                }
+            }
         } else {
-            const [r1, f1] = await pool.execute('SELECT DISTINCT tendang_nhap, user_id from printingShop where user_id = ?', [send])
-            result.push(r1[0])
+            const [r1, f1] = await pool.execute('SELECT DISTINCT ten_cua_hang, user_id from printingShop  where user_id = ?', [send])
+            if (!id.includes(r1[0]['user_id'])) {
+                result.push(r1[0])
+                id.push(r1[0]['user_id'])
+                const [r2, f2] = await pool.execute("SELECT * FROM message WHERE ((send = ? and receive=?)) and isRead=0", [send, user_id])
+                if (r2.length > 0) {
+                    isRead.push(0)
+                } else {
+                    isRead.push(1)
+                }
+            }
 
         }
-
     }
     return res.status(200).json({
         "ds": result,
+        "isRead": isRead
     })
 }
 
@@ -968,11 +995,108 @@ let updatePriceProduct = async (req, res) => {
     })
 }
 
+
+let themIuThich = async (req, res) => {
+    let { user_id, name, author, subject } = req.body
+    // console.log(product_date)
+
+    const [r, f] = await pool.execute("SELECT product_id FROM products where name = ? and subject = ? and author = ?", [name, subject, author])
+    const [r1, f1] = await pool.execute("SELECT * FROM favorites WHERE product_id = ? and user_id = ?", [r[0].product_id, user_id])
+    if (r1.length === 0) {
+        const [r2, f2] = await pool.execute("INSERT INTO favorites(user_id, product_id, fav_date) VALUES(?, ?, NOW())", [user_id, r[0].product_id])
+        return res.status(200).json({
+            message: "Đã thêm vào mục yêu thích"
+        })
+    } else {
+        const [r2, f2] = await pool.execute("DELETE FROM favorites WHERE user_id=? and product_id=?", [user_id, r[0].product_id])
+        return res.status(200).json({
+            message: "Đã xoá ra khỏi mục yêu thích"
+        })
+    }
+}
+
+let ktYeuThich = async (req, res) => {
+    let { user_id, name, author, subject } = req.body
+    // console.log(product_date)
+
+    const [r, f] = await pool.execute("SELECT product_id FROM products where name = ? and subject = ? and author = ?", [name, subject, author])
+    // return res.status(200).json({
+    //     "mess": r
+    // })
+    const [r1, f1] = await pool.execute("SELECT * FROM favorites WHERE product_id = ? and user_id = ?", [r[0].product_id, user_id])
+    if (r1.length === 0) {
+        return res.status(200).json({
+            check: "0"
+        })
+    } else {
+        return res.status(200).json({
+            check: "1"
+        })
+    }
+}
+
+let layDSYT = async (req, res) => {
+    let user_id = req.body.user_id
+    const [rows, fields] = await pool.execute('SELECT products.product_id, products.user_id, name, price, subject, detail, img_id, hidden, type, fac_id, product_date, author FROM products,favorites  WHERE products.product_id = favorites.product_id and favorites.user_id = ?', [user_id])
+    return res.status(200).json({
+        result: rows
+    })
+}
+
+let searchQuestion = async (req, res) => {
+    let searchName = req.body.searchName
+    const [rows, fiels] = await pool.execute("SELECT * FROM `questions` WHERE title LIKE '%" + searchName + "%' or detail LIKE '%" + searchName + "%' ORDER BY time DESC")
+    return res.status(200).json({
+        "result": rows
+    })
+}
+
+let updateTenCuaHang = async (req, res) => {
+    let { user_id, ten_cua_hang } = req.body
+    const [r1, f1] = await pool.execute("UPDATE printingshop SET ten_cua_hang = ? WHERE user_id = ?", [ten_cua_hang, user_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+}
+
+let updateDiaChi = async (req, res) => {
+    let { user_id, dia_chi } = req.body
+    const [r1, f1] = await pool.execute("UPDATE printingshop SET dia_chi = ? WHERE user_id = ?", [dia_chi, user_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+}
+
+let updateSDT = async (req, res) => {
+    let { user_id, sdt } = req.body
+    const [r1, f1] = await pool.execute("UPDATE printingshop SET sdt = ? WHERE user_id = ?", [sdt, user_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+}
+
+let updateTimeMo = async (req, res) => {
+    let { user_id, thoi_gian_mo } = req.body
+    const [r1, f1] = await pool.execute("UPDATE printingshop SET thoi_gian_mo = ? WHERE user_id = ?", [thoi_gian_mo, user_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+}
+
+let updateTimeDong = async (req, res) => {
+    let { user_id, thoi_gian_dong } = req.body
+    const [r1, f1] = await pool.execute("UPDATE printingshop SET thoi_gian_dong = ? WHERE user_id = ?", [thoi_gian_dong, user_id])
+    return res.status(200).json({
+        "message": "ok"
+    })
+}
+
 module.exports = {
     getAllUsers, createNewUser, getUser, getRecommendedProducts,
     getImageFromId, uploadProduct, getQuestion, uploadQuestion_1, uploadQuestion_2,
     getQuestionFromId, sendMessage, searchProducts, getInfoUser, getMyProducts, hiddenProduct, unHiddenProduct,
     historyOfChat, comment, getCmt, insertPrinttingShop, checkUserName, getInfoShop, getListMessage,
     getListShop, getListMessageUser, getListMessageShop, doiMK, getProductFromAuthor, getMaXacNhan, updateMk,
-    updateNameProduct, updateDetailProduct, updatePriceProduct
+    updateNameProduct, updateDetailProduct, updatePriceProduct, themIuThich, ktYeuThich, layDSYT, searchQuestion,
+    updateTenCuaHang, updateDiaChi, updateSDT, updateTimeMo, updateTimeDong
 }
